@@ -1,0 +1,8 @@
+## INSTALL
+# pip install -r requirements.txt
+
+## UPDATE DEENDS
+# pip install pipreqs && pipreqs .
+discord-webhook # https://github.com/lovvskillz/python-discord-webhook < used in minecraft-panel/src/utils/notifications
+requests==2.27.1
+schedule==1.1.0
