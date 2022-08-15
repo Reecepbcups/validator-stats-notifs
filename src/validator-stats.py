@@ -110,7 +110,8 @@ def postUpdate(chain, walletAddress):
             "Chain": [chain.upper(), True],            
             "Bonded Tokens": [stats['bonded_tokens'], True],
             "Commission": [f"{float(stats['commission'])*100}%", False],
-            "Unique Delegators": [f"{stats['unique_delegators']}", False],            
+            "Ranking": [f"#{stats['validator_ranking']} / {stats['max_validators']}", False],
+            "Unique Delegators": [f"{stats['unique_delegators']}", False],          
         }
 
         discord_notification(
