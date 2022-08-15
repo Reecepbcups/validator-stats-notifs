@@ -4,5 +4,5 @@
 ## UPDATE DEENDS
 # pip install pipreqs && pipreqs .
 discord-webhook # https://github.com/lovvskillz/python-discord-webhook < used in minecraft-panel/src/utils/notifications
-requests==2.27.1
-schedule==1.1.0
+requests>=2.20.0
+cosmpy-api

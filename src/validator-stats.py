@@ -18,7 +18,6 @@ Docker:
 '''
 
 import requests
-import schedule
 import time
 import json
 import tweepy
@@ -27,7 +26,7 @@ import os
 # from discord import Webhook, RequestsWebhookAdapter
 from utils.notifications import discord_notification
 
-from ChainApis import chainAPIs
+from cosmpy_api import get_chain, REST_ENDPOINTS, CHAIN_APIS # just for the keys
 
 HEADERS = {
     'accept': 'application/json', 
@@ -132,16 +131,8 @@ def getChainsImage(chain):
     if len(IMAGE) > 0:
         return IMAGE
 
-    url = chainAPIs[chain][-2]
-    
-    # check if url is a dict
-    if isinstance(url, str) and "http" in url:
-        return url
-    if isinstance(url, dict):
-        url = url['logo']
-
-    print('image:', url)
-    return IMAGE
+    # url = chainAPIs[chain][-2]
+    return get_chain(chain).get('logo', '')
 
 def getValidatorStats(chain, walletAddr) -> dict:
     '''
@@ -149,20 +140,21 @@ def getValidatorStats(chain, walletAddr) -> dict:
     https://api.cosmos.network/cosmos/staking/v1beta1/validators/cosmosvaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qkrka4zk
     '''
 
-    queryEndpoint = chainAPIs[chain][0] + walletAddr
+    ROOT_URL = get_chain(chain)['rest_root']
 
     # get a validators details
+    queryEndpoint = f"{ROOT_URL}/{REST_ENDPOINTS['validator_info']}/{walletAddr}"
     r = requests.get(queryEndpoint, headers=HEADERS)
     if r.status_code != 200:
-        print(f"\n(Error): {r.status_code} on {chainAPIs[chain][0]}")
+        print(f"\n(Error): {r.status_code} on {queryEndpoint}")
         return {}
     validatorData = r.json()['validator']
 
     # get chain params
-    params_url = f"{chainAPIs[chain][0].split('/cosmos/')[0]}/cosmos/staking/v1beta1/params"
+    params_url = f"{ROOT_URL}/{REST_ENDPOINTS['params']}"
     r = requests.get(params_url, headers=HEADERS)
     if r.status_code != 200:
-        print(f"\n(Error): {r.status_code} on {chainAPIs[chain][0]}")
+        print(f"\n(Error): {r.status_code} on {params_url}")
         return {}
     paramsData = r.json()['params']
 
@@ -170,8 +162,8 @@ def getValidatorStats(chain, walletAddr) -> dict:
     # get total # of unique delegators
     #  https://lcd-osmosis.blockapsis.com/cosmos/staking/v1beta1/validators/osmovaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qk5wjn0s/delegations?pagination.limit=10000
     try:
-        # raise Exception("test")
-        delegators_url = f"{chainAPIs[chain][0].split('/cosmos/')[0]}/cosmos/staking/v1beta1/validators/{walletAddr}/delegations?pagination.limit=10000"
+        raise Exception("test")
+        delegators_url = f"{queryEndpoint}/delegations?pagination.limit=10000"
         r = requests.get(delegators_url, headers=HEADERS)
         if r.status_code != 200:
             print(f"\n(Error): {r.status_code} on delegators_url: {delegators_url}")       
@@ -225,7 +217,7 @@ def postUpdate(chain, walletAddress):
         )
 
     except Exception as err:
-        print( str(err) + " OR Tweet failed due to being duplicate")
+        print( "ERROR: ", str(err))
 
 
 def runBalanceCheckForWallet(chain, wallet):
@@ -241,20 +233,17 @@ def runChecks():
     # check the balance of that wallet using the given LCD API
     checkedWallets = []
     for wallet in OPERATOR_ADDRESSES:
-        for chain in chainAPIs.keys():
-            if wallet.startswith(chain):
-                checkedWallets.append(wallet)
-                # runBalanceCheckForWallet(chain, wallet)
+        for chain in CHAIN_APIS.keys():
+            if str(wallet).startswith(chain):
                 postUpdate(chain, wallet)
-
-    print(f"Wallets checked {time.ctime()}, waiting...")
+                checkedWallets.append(wallet)                        
+    print(f"Opperator wallets checked {time.ctime()}, waiting...")
 
     # Tell user which wallets were not checked due to no endpoints
     if len(checkedWallets) != len(OPERATOR_ADDRESSES):
         try:
             _temp = OPERATOR_ADDRESSES
-            for wallet in checkedWallets:
-                # _temp.remove(wallet)
+            for wallet in checkedWallets:                
                 del _temp[wallet]
             print("\n(ERROR): Left over wallets (MAKE SURE TO ADD AN ENDPOINT TIO ChainApis.py): \n" + ',\n'.join(_temp.keys()))
         except Exception as err:
