@@ -3,7 +3,7 @@
 
 ### Steps to Run
 ```bash
-- cp secrets.example.json secrets.json
+cp secrets.example.json secrets.json
 # Update WEBHOOK_URL, and your OPERATOR_ADDRESSES (oni by default)
 
 python -m pip install -r requirements/requirements.txt
