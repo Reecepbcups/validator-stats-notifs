@@ -1,8 +1,8 @@
 ## INSTALL
-# pip install -r requirements.txt
+# pip install -r requirements/requirements.txt
 
 ## UPDATE DEENDS
 # pip install pipreqs && pipreqs .
 discord-webhook # https://github.com/lovvskillz/python-discord-webhook < used in minecraft-panel/src/utils/notifications
 requests>=2.20.0
-cosmpy-api
+cosmpy-api>=0.1.7
