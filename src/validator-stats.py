@@ -21,11 +21,10 @@ import time
 import json
 import os
 
-# from discord import Webhook, RequestsWebhookAdapter
 from utils.notifications import discord_notification
 
-from cosmpy_api import get_chain, REST_ENDPOINTS, CHAIN_APIS # just for the keys
-from cosmpy_chain.validators import get_validator_stats
+from pyibc_api import get_chain, REST_ENDPOINTS, CHAIN_APIS # just for the keys
+from pyibc_chain.validators import get_validator_stats
 
 HEADERS = {
     'accept': 'application/json', 
@@ -146,7 +145,7 @@ def runChecks():
             _temp = OPERATOR_ADDRESSES
             for wallet in checkedWallets:                
                 del _temp[wallet]
-            print("\n(ERROR): Left over wallets (MAKE SURE TO ADD AN ENDPOINT TIO ChainApis.py): \n" + ',\n'.join(_temp.keys()))
+            print("\n(ERROR): Left over wallets (MAKE SURE TO ADD AN ENDPOINT TO ChainApis.py): \n" + ',\n'.join(_temp.keys()))
 
         except Exception as err:
             print(str(err))

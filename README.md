@@ -5,8 +5,11 @@
 ```bash
 cp secrets.example.json secrets.json
 # Update WEBHOOK_URL, and your OPERATOR_ADDRESSES (oni by default)
-
 python -m pip install -r requirements/requirements.txt
-
 python src/validator-stats.py
+
+OR
+
+bash run.sh
+# auto git pull latest, git intall requirements, and run
 ```
