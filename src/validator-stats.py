@@ -17,16 +17,15 @@ Docker:
 *Get REST lcd's in chain.json from https://github.com/cosmos/chain-registry
 '''
 
-import requests
 import time
 import json
-import tweepy
 import os
 
 # from discord import Webhook, RequestsWebhookAdapter
 from utils.notifications import discord_notification
 
 from cosmpy_api import get_chain, REST_ENDPOINTS, CHAIN_APIS # just for the keys
+from cosmpy_chain.validators import get_validator_stats
 
 HEADERS = {
     'accept': 'application/json', 
@@ -48,7 +47,6 @@ def main():
                 runChecks()
 
 # Don't touch below --------------------------------------------------
-
 PREFIX = "COSMOSVALSTATS"
 def getENV(path, default):    
     value = os.getenv(f"{PREFIX}_{path}", default)
@@ -87,150 +85,46 @@ with open('secrets.json', 'r') as f:
     IMAGE = os.getenv(f"{PREFIX}_DISCORD_IMAGE", discSecrets['IMAGE'])
     WEBHOOK_URL = os.getenv(f"{PREFIX}_DISCORD_WEBHOOK_URL", discSecrets['WEBHOOK_URL'])
     USERNAME = discSecrets['USERNAME']
+    COLOR = discSecrets['COLOR']
+    FOOTER = discSecrets['FOOTER']
+    # print(WEBHOOK_URL)
 
-    print(WEBHOOK_URL)
-
-
-def simplifyBalances(balances: dict):
-    '''
-    After using getBalances(chain, wallet) function return -> dict:
-    Reduces [{"denom": "ucraft","amount": "69908452"},{"denom": "uexp","amount": "1000100"}]
-    To: {'ucraft':69908452, 'uexp':1000100}
-    '''
-    output = {}
-    for balance in balances:
-        denom = balance['denom']
-        amount = balance['amount']
-
-        if denom.startswith('ibc/'):
-            continue # skip non native assets
-        elif denom.startswith('gamm'):
-            continue # skip osmo pools
-        
-        if denom.startswith('u'):
-            output[denom[1::]] = int(amount) / 1_000_000
-        elif denom.startswith('aevmos'): # bruh evmos u crazy
-            output[denom[1::]] = int(amount) / 1_000_000_000_000_000_000
-        else:
-            output[denom] = int(amount)
-            
-    # print(chain, walletAddr, output)
-    return dict(output)
-
-# :NEW:
-def reduceBalance(denom: str, amount: int) -> str:    
-    # removes the u denom & div by 1mil. So ucraft 1000000 = craft 1
-    if denom.startswith('u'):        
-        fmtNum = "{:,}".format(round(int(amount) / 1_000_000, 2))
-        return f"{fmtNum} {denom[1::]}"
-
-    elif denom.startswith('aevmos'): # bruh evmos u crazy
-        fmtNum = "{:,}".format(round(int(amount) / 1_000_000_000_000_000_000, 2))
-        return f"{fmtNum} {denom[1::]}"
-
-    else:        
-        return f"{int(amount)} {denom}"
-
-# :new:
 def getChainsImage(chain):
     # gets the URL of the chain
     if len(IMAGE) > 0:
         return IMAGE
 
-    # url = chainAPIs[chain][-2]
     return get_chain(chain).get('logo', '')
 
-def getValidatorStats(chain, walletAddr) -> dict:
-    '''
-    Returns a dict of information about a given validator
-    https://api.cosmos.network/cosmos/staking/v1beta1/validators/cosmosvaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qkrka4zk
-    '''
-
-    ROOT_URL = get_chain(chain)['rest_root']
-
-    # get a validators details
-    queryEndpoint = f"{ROOT_URL}/{REST_ENDPOINTS['validator_info']}/{walletAddr}"
-    r = requests.get(queryEndpoint, headers=HEADERS)
-    if r.status_code != 200:
-        print(f"\n(Error): {r.status_code} on {queryEndpoint}")
-        return {}
-    validatorData = r.json()['validator']
-
-    # get chain params
-    params_url = f"{ROOT_URL}/{REST_ENDPOINTS['params']}"
-    r = requests.get(params_url, headers=HEADERS)
-    if r.status_code != 200:
-        print(f"\n(Error): {r.status_code} on {params_url}")
-        return {}
-    paramsData = r.json()['params']
-
-    # ! IMPORTANT, this may take a while
-    # get total # of unique delegators
-    #  https://lcd-osmosis.blockapsis.com/cosmos/staking/v1beta1/validators/osmovaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qk5wjn0s/delegations?pagination.limit=10000
-    try:
-        # raise Exception("test")
-        delegators_url = f"{queryEndpoint}/delegations?pagination.limit=10000"
-        r = requests.get(delegators_url, headers=HEADERS)
-        if r.status_code != 200:
-            print(f"\n(Error): {r.status_code} on delegators_url: {delegators_url}")       
-        uniqueDelegators = f"{len(r.json()['delegation_responses'])}"
-    except:
-        uniqueDelegators = "-1"
-
-
-    return {
-        "chain": chain,
-        "operator_address": validatorData['operator_address'],
-        "jailed": validatorData['jailed'], 
-        "status": validatorData['status'], # BOND_STATUS_BONDED
-        "bonded_utokens": f"{int(validatorData['tokens'])}", # then based on bond_denom, convert
-        "bonded_tokens": reduceBalance(paramsData['bond_denom'], int(validatorData['tokens'])),
-        "moniker": validatorData['description']['moniker'],
-        "identity": validatorData['description']['identity'],
-        "website": validatorData['description']['website'],
-        "security_contact": validatorData['description']['security_contact'],
-        "commission": validatorData['commission']['commission_rates']['rate'],
-        "max_validators": paramsData['max_validators'],
-        "bond_denom": paramsData['bond_denom'],        
-        "unique_delegators": uniqueDelegators,        
-    }
-    
-# stats = getValidatorStats("cosmos", "cosmosvaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qkrka4zk")
-# print(stats)
-# exit()
 
 def postUpdate(chain, walletAddress):
     try:
         print(f"Getting update for {chain} - {walletAddress}")
-        stats = getValidatorStats(chain, walletAddress)
+        stats = get_validator_stats(
+            chain=chain, 
+            rest_url=get_chain(chain)['rest_root'], 
+            operator_address=walletAddress, 
+            include_number_of_unique_delegations=True
+        )
         values = {
-            "Chain": [chain.upper(), True],
-            # "Address": [walletAddress, False],
+            "Chain": [chain.upper(), True],            
             "Bonded Tokens": [stats['bonded_tokens'], True],
             "Commission": [f"{float(stats['commission'])*100}%", False],
-            "Unique Delegators": [f"{stats['unique_delegators']}", False],
-            # "Website": [stats['website'], False],
+            "Unique Delegators": [f"{stats['unique_delegators']}", False],            
         }
 
         discord_notification(
             WEBHOOK_URL,
-            "Oni Validator Stats",
+            USERNAME,
             "",
-            "D04045",        
+            COLOR,        
             values,
             getChainsImage(chain),
-            "The Oni Protectorate ⚛️\nValidator for the Cosmos. Friend to the Cosmonaut."
+            FOOTER
         )
 
     except Exception as err:
         print( "ERROR: ", str(err))
-
-
-def runBalanceCheckForWallet(chain, wallet):
-    # balances = getBalances(chain, wallet)
-    # simplified = simplifyBalances(balances)
-    # postUpdate(chain, wallet, simplified)
-    pass
 
 def runChecks():   
     print("Running checks...") 
@@ -243,7 +137,7 @@ def runChecks():
             if str(wallet).startswith(chain):
                 postUpdate(chain, wallet)
                 checkedWallets.append(wallet)                        
-    print(f"Opperator wallets checked {time.ctime()}, waiting...")
+    print(f"Operator wallets checked {time.ctime()}, waiting...")
 
     # Tell user which wallets were not checked due to no endpoints
     if len(checkedWallets) != len(OPERATOR_ADDRESSES):
@@ -252,11 +146,10 @@ def runChecks():
             for wallet in checkedWallets:                
                 del _temp[wallet]
             print("\n(ERROR): Left over wallets (MAKE SURE TO ADD AN ENDPOINT TIO ChainApis.py): \n" + ',\n'.join(_temp.keys()))
+
         except Exception as err:
             print(str(err))
             print("Checked wallets: " + str(checkedWallets))
-
-
 
 if __name__ == "__main__":   
     # postUpdate('cosmos', "cosmosvaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qkrka4zk")
