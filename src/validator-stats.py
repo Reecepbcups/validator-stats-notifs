@@ -215,7 +215,7 @@ def postUpdate(chain, walletAddress):
         }
 
         discord_notification(
-            "https://discord.com/api/webhooks/1008480066017173515/2JoUFw5oao6JYXsztgHROcDKmatpsFpmuBGIi_0UvTS7eOiS2DIKfQENOHBJkR7jt7ep",
+            WEBHOOK_URL,
             "Oni Validator Stats",
             "",
             "D04045",        
