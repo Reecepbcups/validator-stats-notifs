@@ -57,6 +57,12 @@ def getENV(path, default):
 def str2bool(v) -> bool: 
     return str(v).lower() in ("yes", "true", "t", "1")
 
+# check if secrets.json exists
+if not os.path.isfile('secrets.json'):
+    print("\n\nsecrets.json not found. Please follow the instructions in the readme...")
+    print("(( cp secrets.example.json secrets.json ))")
+    exit()
+
 with open('secrets.json', 'r') as f:
     secrets = json.load(f)
 
@@ -162,7 +168,7 @@ def getValidatorStats(chain, walletAddr) -> dict:
     # get total # of unique delegators
     #  https://lcd-osmosis.blockapsis.com/cosmos/staking/v1beta1/validators/osmovaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qk5wjn0s/delegations?pagination.limit=10000
     try:
-        raise Exception("test")
+        # raise Exception("test")
         delegators_url = f"{queryEndpoint}/delegations?pagination.limit=10000"
         r = requests.get(delegators_url, headers=HEADERS)
         if r.status_code != 200:
