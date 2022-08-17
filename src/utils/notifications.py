@@ -45,7 +45,9 @@ def discord_graph_notification(webhook="", title="", description="", color="ffff
             webhook.add_embed(embed)
         else:
             # graphs get their own blank embeds (no title / desk)
-            embed = DiscordEmbed()   
+            embed = DiscordEmbed(
+                color=color,
+            )   
             embed.set_image(url=image_link)
             webhook.add_embed(embed)
 
