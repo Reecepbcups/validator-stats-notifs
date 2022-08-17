@@ -23,7 +23,7 @@ import os
 
 from utils.notifications import discord_notification, discord_graph_notification
 
-from pyibc_api import get_chain, REST_ENDPOINTS, CHAIN_APIS # just for the keys
+from pyibc_api import get_chain, REST_ENDPOINTS, CHAIN_APIS, get_all_chains # just for the keys
 from pyibc_chain.validators import get_validator_stats
 
 HEADERS = {
@@ -184,7 +184,7 @@ def runChecks():
     # check the balance of that wallet using the given LCD API
     checkedWallets = []
     for wallet in OPERATOR_ADDRESSES.keys():
-        for chain in CHAIN_APIS.keys():
+        for chain in get_all_chains():
             if str(wallet).startswith(chain):
                 postUpdate(chain, wallet, graph=OPERATOR_ADDRESSES[wallet])
                 checkedWallets.append(wallet)                        
