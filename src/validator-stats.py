@@ -21,7 +21,7 @@ import time
 import json
 import os
 
-from utils.notifications import discord_notification
+from utils.notifications import discord_notification, discord_graph_notification
 
 from pyibc_api import get_chain, REST_ENDPOINTS, CHAIN_APIS # just for the keys
 from pyibc_chain.validators import get_validator_stats
@@ -68,12 +68,13 @@ with open('secrets.json', 'r') as f:
     USE_PYTHON_RUNNABLE = bool(getENV(f"SCHEDULER_USE_PYTHON_RUNNABLE", secrets["SCHEDULER"]["USE_PYTHON_RUNNABLE"]))
     SCHEDULE_MINUTES = int(getENV(f"SCHEDULER_IF_ABOVE_IS_TRUE_HOW_MANY_MINUTES_BETWEEN_CHECKS", secrets["SCHEDULER"]["IF_ABOVE_IS_TRUE_HOW_MANY_MINUTES_BETWEEN_CHECKS"]))
 
-    OPERATOR_ADDRESSES = secrets['OPERATOR_ADDRESSES']
+    OPERATOR_ADDRESSES = dict(secrets['OPERATOR_ADDRESSES'])
     _wallets = os.getenv(f"{PREFIX}_OPERATOR_ADDRESSES") # only works on local linmux docker run
     if _wallets is not None: # grabs from file, but if there is an env variable it uses that
+        # NOT TESTED
         OPERATOR_ADDRESSES = dict(eval(_wallets))['OPERATOR_ADDRESSES']
         print("using" + _wallets + " from the env variable")
-    print(OPERATOR_ADDRESSES)
+    # print(OPERATOR_ADDRESSES)
 
     # loop through all os variables & print out keys for debugging
     for key in os.environ:
@@ -95,36 +96,71 @@ def getChainsImage(chain):
 
     return get_chain(chain).get('logo', '')
 
+import stats_and_image
+def postUpdate(chain, walletAddress, graph=""):
 
-def postUpdate(chain, walletAddress):
-    try:
-        print(f"Getting update for {chain} - {walletAddress}")
+    if len(graph) > 0:
+        print("Using graph since len > 0")
+        img_stats = stats_and_image.get_stats(graph)
+        stats_and_image.make_image(chain, img_stats, "votingPower", title="Voting Power", yAxis=chain, xAxis="Date")
+        stats_and_image.make_image(chain, img_stats, "uniqueDelegates", title="Unique Delegators", yAxis="Delegators", xAxis="Date")
+
         stats = get_validator_stats(
             chain=chain, 
             rest_url=get_chain(chain)['rest_root'], 
             operator_address=walletAddress, 
-            include_number_of_unique_delegations=True
+            include_number_of_unique_delegations=False
         )
         values = {
             "Chain": [chain.upper(), True],            
-            "Bonded Tokens": [stats['bonded_tokens'], True],
-            "Commission": [f"{float(stats['commission'])*100}%", False],
+            # "Bonded Tokens": [stats['bonded_tokens'], True],
+            # "Commission": [f"{float(stats['commission'])*100}%", False],
             "Ranking": [f"#{stats['validator_ranking']} / {stats['max_validators']}", False],
-            "Unique Delegators": [f"{stats['unique_delegators']}", False],          
+            # "Unique Delegators": [f"{stats['unique_delegators']}", False],          
         }
 
-        discord_notification(
-            WEBHOOK_URL,
-            USERNAME,
-            "",
-            COLOR,        
-            values,
-            getChainsImage(chain),
-            FOOTER
+        discord_graph_notification(
+            webhook=WEBHOOK_URL, 
+            title="", 
+            description="", 
+            color="ffffff", 
+            values=values, 
+            graph_image_links=[
+                f"http://127.0.0.1:80/{chain}_votingPower.png",
+                f"http://127.0.0.1:80/{chain}_uniqueDelegates.png",
+            ]
         )
 
-    except Exception as err:
-        print( "ERROR: ", str(err))
+    # 
+    else:        
+        try:
+            print(f"Getting update for {chain} - {walletAddress}")
+            stats = get_validator_stats(
+                chain=chain, 
+                rest_url=get_chain(chain)['rest_root'], 
+                operator_address=walletAddress, 
+                include_number_of_unique_delegations=True
+            )
+            values = {
+                "Chain": [chain.upper(), True],            
+                "Bonded Tokens": [stats['bonded_tokens'], True],
+                "Commission": [f"{float(stats['commission'])*100}%", False],
+                "Ranking": [f"#{stats['validator_ranking']} / {stats['max_validators']}", False],
+                "Unique Delegators": [f"{stats['unique_delegators']}", False],          
+            }
+
+            discord_notification(
+                WEBHOOK_URL,
+                USERNAME,
+                "",
+                COLOR,        
+                values,
+                getChainsImage(chain),
+                FOOTER
+            )
+
+        except Exception as err:
+            print( "ERROR: ", str(err))
 
 def runChecks():   
     print("Running checks...") 
@@ -132,10 +168,10 @@ def runChecks():
     # Go through all wallets & ChainAPis matching. If the wallet starts with a ChainAPI keyname
     # check the balance of that wallet using the given LCD API
     checkedWallets = []
-    for wallet in OPERATOR_ADDRESSES:
+    for wallet in OPERATOR_ADDRESSES.keys():
         for chain in CHAIN_APIS.keys():
             if str(wallet).startswith(chain):
-                postUpdate(chain, wallet)
+                postUpdate(chain, wallet, graph=OPERATOR_ADDRESSES[wallet])
                 checkedWallets.append(wallet)                        
     print(f"Operator wallets checked {time.ctime()}, waiting...")
 

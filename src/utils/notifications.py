@@ -24,6 +24,28 @@ def discord_notification(url="", title="", description="", color="ffffff", value
     response = webhook.execute()
 
 
+# graph notification
+def discord_graph_notification(webhook="", title="", description="", color="ffffff", values={}, graph_image_links=[]):
+    webhook = DiscordWebhook(url=webhook)
+    
+    embed = DiscordEmbed(
+        title=title, 
+        description=description, 
+        # color=color,        
+    )   
+
+    for idx, image_link in enumerate(graph_image_links):
+        if idx == 0:
+            embed.set_image(url=image_link)        
+            webhook.add_embed(embed)
+        else:
+            # graphs get their own blank embeds (no title / desk)
+            embed = DiscordEmbed()   
+            embed.set_image(url=image_link)
+            webhook.add_embed(embed)
+
+    response = webhook.execute() 
+
 if __name__ == "__main__":
     discord_notification(
         "https://discord.com/api/webhooks/1008480066017173515/2JoUFw5oao6JYXsztgHROcDKmatpsFpmuBGIi_0UvTS7eOiS2DIKfQENOHBJkR7jt7ep",
