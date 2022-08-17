@@ -36,9 +36,14 @@ def convert_number_to_readable(num: int) -> str:
         return str(round(num / 1000000000000, SIG_FIGS)) + 'T'
 
 
-def make_image(chain_name, stats, value_key, title="", yAxis="y-axis", xAxis="Date"):
+def make_image(chain_name, stats, value_key, title="", yAxis="y-axis", xAxis="Date", colors={}):
+    # COLORS = {
+    #     'LINE': LINE_COLOR,
+    #     'CHART_BACKGROUND': CHART_BACKGROUND,
+    #     'MAIN_BACKGROUND': MAIN_BACKGROUND
+    # }
     os.makedirs('images', exist_ok=True)
-    plt.style.use('dark_background')
+    plt.style.use(colors['MAIN_BACKGROUND'])
     fig, ax = plt.subplots()
     L = 6
     ncolors = len(plt.rcParams['axes.prop_cycle'])
@@ -67,9 +72,9 @@ def make_image(chain_name, stats, value_key, title="", yAxis="y-axis", xAxis="Da
     ax.xaxis.label.set_fontsize(15)
     ax.yaxis.label.set_fontsize(15)
     
-    ax.lines[0].set_color('orange')
+    ax.lines[0].set_color(colors['LINE'])
     # set background to a dark gray
-    ax.set_facecolor('#222222')
+    ax.set_facecolor(colors['CHART_BACKGROUND'])
 
     # Change Y axis scalking to be like 1.10M
     plt.gca().set_yticklabels([convert_number_to_readable(x) for x in plt.gca().get_yticks()])

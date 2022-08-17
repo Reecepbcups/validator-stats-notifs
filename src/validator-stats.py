@@ -79,6 +79,10 @@ with open('secrets.json', 'r') as f:
     IMAGES_URL = os.getenv(f"{PREFIX}_DISCORD_IMAGES_URL", secrets['IMAGES_URL'])    
     if IMAGES_URL.endswith('/'): IMAGES_URL = IMAGES_URL[:-1]
 
+    LINE_COLOR = os.getenv(f"{PREFIX}_GRAPH_COLORS_LINE", secrets['GRAPH_COLORS']['LINE'])  
+    CHART_BACKGROUND = os.getenv(f"{PREFIX}_GRAPH_COLORS_CHART_BACKGROUND", secrets['GRAPH_COLORS']['CHART_BACKGROUND'])
+    MAIN_BACKGROUND = os.getenv(f"{PREFIX}_GRAPH_COLORS_MAIN_BACKGROUND", secrets['GRAPH_COLORS']['MAIN_BACKGROUND'])
+
     # loop through all os variables & print out keys for debugging
     for key in os.environ:
         if key.startswith(PREFIX):
@@ -104,8 +108,15 @@ def postUpdate(chain, walletAddress, graph=""):
     if len(graph) > 0:
         print("Using graph since len > 0")
         img_stats = stats_and_image.get_stats(graph)
-        stats_and_image.make_image(chain, img_stats, "votingPower", title="Stake Secured", yAxis=chain, xAxis="Date")
-        stats_and_image.make_image(chain, img_stats, "uniqueDelegates", title="Unique Delegators", yAxis="Delegators", xAxis="Date")
+
+        COLORS = {
+            'LINE': LINE_COLOR,
+            'CHART_BACKGROUND': CHART_BACKGROUND,
+            'MAIN_BACKGROUND': MAIN_BACKGROUND
+        }
+
+        stats_and_image.make_image(chain, img_stats, "votingPower", title="Stake Secured", yAxis=chain, xAxis="Date", colors=COLORS)
+        stats_and_image.make_image(chain, img_stats, "uniqueDelegates", title="Unique Delegators", yAxis="Delegators", xAxis="Date", colors=COLORS)
 
         stats = get_validator_stats(
             chain=chain, 
