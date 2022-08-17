@@ -76,6 +76,9 @@ with open('secrets.json', 'r') as f:
         print("using" + _wallets + " from the env variable")
     # print(OPERATOR_ADDRESSES)
 
+    IMAGES_URL = os.getenv(f"{PREFIX}_DISCORD_IMAGES_URL", secrets['IMAGES_URL'])    
+    if IMAGES_URL.endswith('/'): IMAGES_URL = IMAGES_URL[:-1]
+
     # loop through all os variables & print out keys for debugging
     for key in os.environ:
         if key.startswith(PREFIX):
@@ -83,9 +86,6 @@ with open('secrets.json', 'r') as f:
 
     discSecrets = secrets['DISCORD']
     IMAGE = os.getenv(f"{PREFIX}_DISCORD_IMAGE", discSecrets['IMAGE'])
-    IMAGES_URL = os.getenv(f"{PREFIX}_DISCORD_IMAGES_URL", discSecrets['IMAGES_URL'])    
-    if IMAGES_URL.endswith('/'): IMAGES_URL = IMAGES_URL[:-1]
-
     WEBHOOK_URL = os.getenv(f"{PREFIX}_DISCORD_WEBHOOK_URL", discSecrets['WEBHOOK_URL'])
     USERNAME = discSecrets['USERNAME']
     COLOR = discSecrets['COLOR']
@@ -125,12 +125,14 @@ def postUpdate(chain, walletAddress, graph=""):
             webhook=WEBHOOK_URL, 
             title=USERNAME, 
             description="", 
-            color="ffffff", 
+            color=COLOR, 
             values=values, 
             graph_image_links=[
                 f"{IMAGES_URL}/{chain}_votingPower.png",
                 f"{IMAGES_URL}/{chain}_uniqueDelegates.png",
-            ]
+            ],            
+            thumbnail=getChainsImage(chain),
+            footer=FOOTER,
         )
 
     # 
