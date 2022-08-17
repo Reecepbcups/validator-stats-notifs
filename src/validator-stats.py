@@ -83,6 +83,9 @@ with open('secrets.json', 'r') as f:
 
     discSecrets = secrets['DISCORD']
     IMAGE = os.getenv(f"{PREFIX}_DISCORD_IMAGE", discSecrets['IMAGE'])
+    IMAGES_URL = os.getenv(f"{PREFIX}_DISCORD_IMAGES_URL", discSecrets['IMAGES_URL'])    
+    if IMAGES_URL.endswith('/'): IMAGES_URL = IMAGES_URL[:-1]
+
     WEBHOOK_URL = os.getenv(f"{PREFIX}_DISCORD_WEBHOOK_URL", discSecrets['WEBHOOK_URL'])
     USERNAME = discSecrets['USERNAME']
     COLOR = discSecrets['COLOR']
@@ -98,7 +101,6 @@ def getChainsImage(chain):
 
 import stats_and_image
 def postUpdate(chain, walletAddress, graph=""):
-
     if len(graph) > 0:
         print("Using graph since len > 0")
         img_stats = stats_and_image.get_stats(graph)
@@ -121,13 +123,13 @@ def postUpdate(chain, walletAddress, graph=""):
 
         discord_graph_notification(
             webhook=WEBHOOK_URL, 
-            title="", 
+            title=USERNAME, 
             description="", 
             color="ffffff", 
             values=values, 
             graph_image_links=[
-                f"http://127.0.0.1:80/{chain}_votingPower.png",
-                f"http://127.0.0.1:80/{chain}_uniqueDelegates.png",
+                f"{IMAGES_URL}/{chain}_votingPower.png",
+                f"{IMAGES_URL}/{chain}_uniqueDelegates.png",
             ]
         )
 

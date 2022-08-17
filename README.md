@@ -13,3 +13,15 @@ OR
 bash run.sh
 # auto git pull latest, git intall requirements, and run
 ```
+
+
+### If you want graphs
+```
+# Arch
+sudo pacman -S docker
+systemctl start docker
+systemctl enable docker
+
+cd validator-stats-notifs
+bash run_docker.sh
+```
