@@ -104,7 +104,7 @@ def postUpdate(chain, walletAddress, graph=""):
     if len(graph) > 0:
         print("Using graph since len > 0")
         img_stats = stats_and_image.get_stats(graph)
-        stats_and_image.make_image(chain, img_stats, "votingPower", title="Voting Power", yAxis=chain, xAxis="Date")
+        stats_and_image.make_image(chain, img_stats, "votingPower", title="Stake Secured", yAxis=chain, xAxis="Date")
         stats_and_image.make_image(chain, img_stats, "uniqueDelegates", title="Unique Delegators", yAxis="Delegators", xAxis="Date")
 
         stats = get_validator_stats(
