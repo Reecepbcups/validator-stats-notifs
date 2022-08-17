@@ -22,6 +22,9 @@ sudo pacman -S docker
 systemctl start docker
 systemctl enable docker
 
+# ensure you allow the firewall to port 722
+# (to change port, edit run_docker.sh & default.conf)
+
 cd validator-stats-notifs
 bash run_docker.sh
 ```
