@@ -1,4 +1,4 @@
-import requests, os
+import requests, os, time
 import matplotlib.pyplot as plt
 
 # def main():
@@ -8,9 +8,13 @@ import matplotlib.pyplot as plt
 #         make_image(chain, stats, "votingPower", title="Voting Power", yAxis=chain, xAxis="Date")
 #         make_image(chain, stats, "uniqueDelegates", title="Unique Delegators", yAxis="Delegators", xAxis="Date")
 
-def get_stats(api_link):
-    response = requests.get(api_link)
-    # get stats
+def get_stats(api_link: str):
+    # get current epoch time in seconds based on system time
+    response = requests.get(api_link.replace("{EPOCH}", str(int(round(time.time())))))    
+
+    if 'stats' not in response.json().keys():
+        return {}
+
     stats = response.json()['stats']
     # loop through stats & get statDate & votingPower
     data = {}

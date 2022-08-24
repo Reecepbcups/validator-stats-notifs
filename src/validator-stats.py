@@ -127,10 +127,13 @@ def postUpdate(chain, walletAddress, graph=""):
         values = {
             "Chain": [chain.upper(), True],            
             # "Bonded Tokens": [stats['bonded_tokens'], True],
-            # "Commission": [f"{float(stats['commission'])*100}%", False],
-            "Ranking": [f"#{stats['validator_ranking']} / {stats['max_validators']}", False],
+            # "Commission": [f"{float(stats['commission'])*100}%", False],            
             # "Unique Delegators": [f"{stats['unique_delegators']}", False],          
         }
+
+        # the lcd is likely down for this, happened for evmos
+        if 'validator_ranking' in stats.keys():
+            values['Ranking'] = [f"#{stats['validator_ranking']} / {stats['max_validators']}", False]
 
         discord_graph_notification(
             webhook=WEBHOOK_URL, 
