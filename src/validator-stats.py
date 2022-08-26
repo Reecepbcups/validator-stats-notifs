@@ -106,7 +106,9 @@ def getChainsImage(chain):
     return get_chain(chain).get('logo', '')
 
 # stops discord CDN from caching, used in the image path
-now = time.strftime("%H_%M_%S", time.localtime())
+# year, month, day
+
+now = time.strftime("%Y_%b_%d_%H_%M_%S", time.localtime())
 
 def postUpdate(chain, walletAddress, graph=""):
     print(f"Getting update for {chain} - {walletAddress}")
