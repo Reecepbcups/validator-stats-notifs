@@ -26,6 +26,8 @@ from utils.notifications import discord_notification, discord_graph_notification
 from pyibc_api import get_chain, REST_ENDPOINTS, CHAIN_APIS, get_all_chains # just for the keys
 from pyibc_chain.validators import get_validator_stats
 
+import stats_and_image
+
 HEADERS = {
     'accept': 'application/json', 
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36'
@@ -103,10 +105,14 @@ def getChainsImage(chain):
 
     return get_chain(chain).get('logo', '')
 
-import stats_and_image
+# stops discord CDN from caching, used in the image path
+now = time.strftime("%H_%M_%S", time.localtime())
+
 def postUpdate(chain, walletAddress, graph=""):
+    print(f"Getting update for {chain} - {walletAddress}")
+    
     if len(graph) > 0:
-        print("Using graph since len > 0")
+        print("API URL provided, getting graphs")
         img_stats = stats_and_image.get_stats(graph)
 
         COLORS = {
@@ -115,8 +121,8 @@ def postUpdate(chain, walletAddress, graph=""):
             'MAIN_BACKGROUND': MAIN_BACKGROUND
         }
 
-        stats_and_image.make_image(chain, img_stats, "votingPower", title="Stake Secured", yAxis=chain, xAxis="Date", colors=COLORS)
-        stats_and_image.make_image(chain, img_stats, "uniqueDelegates", title="Unique Delegators", yAxis="Delegators", xAxis="Date", colors=COLORS)
+        stats_and_image.make_image(chain, img_stats, "votingPower", now, title="Stake Secured", yAxis=chain, xAxis="Date", colors=COLORS)
+        stats_and_image.make_image(chain, img_stats, "uniqueDelegates", now, title="Unique Delegators", yAxis="Delegators", xAxis="Date", colors=COLORS)
 
         stats = get_validator_stats(
             chain=chain, 
@@ -139,17 +145,15 @@ def postUpdate(chain, walletAddress, graph=""):
             color=COLOR, 
             values=values, 
             graph_image_links=[
-                f"{IMAGES_URL}/{chain}_votingPower.png",
-                f"{IMAGES_URL}/{chain}_uniqueDelegates.png",
+                f"{IMAGES_URL}/{chain}_votingPower_{now}.png",
+                f"{IMAGES_URL}/{chain}_uniqueDelegates_{now}.png",
             ],            
             thumbnail=getChainsImage(chain),
             footer=FOOTER,
         )
-
-    # 
-    else:        
+ 
+    else:
         try:
-            print(f"Getting update for {chain} - {walletAddress}")
             stats = get_validator_stats(
                 chain=chain, 
                 rest_url=get_chain(chain)['rest_root'], 
@@ -178,10 +182,23 @@ def postUpdate(chain, walletAddress, graph=""):
             print( "ERROR: ", str(err))
 
 def runChecks():   
-    print("Running checks...") 
+    print("Running checks...")
+
+    # delete all png images from inside of the images folder
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    images_dir = os.path.join(parent_dir, 'images')    
+    # print(images_dir)
+    # delete all pnf files in the images folder
+    print("Deleting old png files from the last run")
+    files_len = len(os.listdir(images_dir))
+    for file in os.listdir(images_dir):
+        if file.endswith(".png"):
+            os.remove(os.path.join(images_dir, file))
+    print(f"Removed {files_len} png files")
 
     # Go through all wallets & ChainAPis matching. If the wallet starts with a ChainAPI keyname
     # check the balance of that wallet using the given LCD API
+    print("Generating new charts...")
     checkedWallets = []
     for wallet in OPERATOR_ADDRESSES.keys():
         for chain in get_all_chains():

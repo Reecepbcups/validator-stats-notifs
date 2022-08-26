@@ -1,6 +1,9 @@
 import requests, os, time
 import matplotlib.pyplot as plt
 
+import warnings
+warnings.filterwarnings("ignore")
+
 # def main():
 #     os.makedirs('images', exist_ok=True)
 #     for chain in CHAINS:
@@ -40,7 +43,7 @@ def convert_number_to_readable(num: int) -> str:
         return str(round(num / 1000000000000, SIG_FIGS)) + 'T'
 
 
-def make_image(chain_name, stats, value_key, title="", yAxis="y-axis", xAxis="Date", colors={}):
+def make_image(chain_name, stats, value_key, current_time: str, title="", yAxis="y-axis", xAxis="Date", colors={}):
     # COLORS = {
     #     'LINE': LINE_COLOR,
     #     'CHART_BACKGROUND': CHART_BACKGROUND,
@@ -84,5 +87,5 @@ def make_image(chain_name, stats, value_key, title="", yAxis="y-axis", xAxis="Da
     plt.gca().set_yticklabels([convert_number_to_readable(x) for x in plt.gca().get_yticks()])
 
     # save plt.show() as an image to disk, we need this so the bot can grab a link
-    plt.savefig(f"images/{chain_name}_{value_key}.png")
+    plt.savefig(f"images/{chain_name}_{value_key}_{current_time}.png")
     # plt.show()
