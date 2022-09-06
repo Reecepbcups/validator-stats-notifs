@@ -78,6 +78,12 @@ with open('secrets.json', 'r') as f:
         print("using" + _wallets + " from the env variable")
     # print(OPERATOR_ADDRESSES)
 
+    # check if EXTRA_NOTES key is in secrets.json
+    EXTRA_NOTES = {}
+    if 'EXTRA_NOTES' in secrets:
+        EXTRA_NOTES = dict(secrets['EXTRA_NOTES'])
+
+
     IMAGES_URL = os.getenv(f"{PREFIX}_DISCORD_IMAGES_URL", secrets['IMAGES_URL'])    
     if IMAGES_URL.endswith('/'): IMAGES_URL = IMAGES_URL[:-1]
 
@@ -140,6 +146,9 @@ def postUpdate(chain, walletAddress, graph=""):
             # "Unique Delegators": [f"{stats['unique_delegators']}", False], # make include_number_of_unique_delegations if you want this
         }
 
+        if walletAddress in EXTRA_NOTES.keys() and len(EXTRA_NOTES[walletAddress])>0: # adds extra thing to the embed if the wallet has extra notes enabled
+            values["Note"] = [EXTRA_NOTES[walletAddress], False]
+
         discord_graph_notification(
             webhook=WEBHOOK_URL, 
             title=USERNAME, 
@@ -169,6 +178,9 @@ def postUpdate(chain, walletAddress, graph=""):
                 "Ranking": [f"#{stats['validator_ranking']} / {stats['max_validators']}", False],
                 "Unique Delegators": [f"{stats['unique_delegators']}", False],          
             }
+
+            if walletAddress in EXTRA_NOTES.keys() and len(EXTRA_NOTES[walletAddress])>0: # adds extra thing to the embed if the wallet has extra notes enabled
+                values["Note"] = [EXTRA_NOTES[walletAddress], False]
 
             discord_notification(
                 WEBHOOK_URL,
