@@ -28,3 +28,12 @@ systemctl enable docker
 cd validator-stats-notifs
 bash run_docker.sh
 ```
+
+### Missing a chain you want?
+make a PR to the following module
+```
+https://github.com/Reecepbcups/python-ibc
+src -> pyibc_api -> chain_apis -> CHAIN_APIS dict
+
+Will move to cosmos.directory in the future, hardcoded for now
+```
