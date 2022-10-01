@@ -7,3 +7,4 @@ discord-webhook # https://github.com/lovvskillz/python-discord-webhook < used in
 requests>=2.20.0
 python-ibc>=0.1.1
 matplotlib
+pyopenssl
