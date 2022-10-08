@@ -123,6 +123,11 @@ def postUpdate(chain, walletAddress, graph=""):
         print("API URL provided, getting graphs")
         img_stats = stats_and_image.get_stats(graph)
 
+        # if length of data is 0, then return error        
+        if img_stats == {}:
+            print(f"Could not get any data from the API for {walletAddress} [smartstake issue most likely]")
+            return
+
         COLORS = {
             'LINE': LINE_COLOR,
             'CHART_BACKGROUND': CHART_BACKGROUND,
@@ -217,8 +222,11 @@ def runChecks():
     for wallet in OPERATOR_ADDRESSES.keys():
         for chain in get_all_chains():
             if str(wallet).startswith(chain):
-                postUpdate(chain, wallet, graph=OPERATOR_ADDRESSES[wallet])
-                checkedWallets.append(wallet)                        
+                try:
+                    postUpdate(chain, wallet, graph=OPERATOR_ADDRESSES[wallet])
+                    checkedWallets.append(wallet)
+                except Exception as err:
+                    print(f"ERROR ({wallet}): ", str(err))
     print(f"Operator wallets checked {time.ctime()}, waiting...")
 
     # Tell user which wallets were not checked due to no endpoints
