@@ -120,12 +120,13 @@ def postUpdate(chain, walletAddress, graph=""):
     print(f"Getting update for {chain} - {walletAddress}")
     
     if len(graph) > 0:
-        print("API URL provided, getting graphs")
+        # print("\nAPI URL provided, getting graphs")
         img_stats = stats_and_image.get_stats(graph)
 
         # if length of data is 0, then return error        
         if img_stats == {}:
-            print(f"Could not get any data from the API for {walletAddress} [smartstake issue most likely]")
+            graph_link = graph.replace('{EPOCH}', str(int(round(time.time()))))
+            print(f"[!] Could not get any data from the API for {walletAddress} [smartstake issue most likely]\n-> {graph_link}\n")
             return
 
         COLORS = {
@@ -227,6 +228,7 @@ def runChecks():
                     checkedWallets.append(wallet)
                 except Exception as err:
                     print(f"ERROR ({wallet}): ", str(err))
+                # exit(1)
     print(f"Operator wallets checked {time.ctime()}, waiting...")
 
     # Tell user which wallets were not checked due to no endpoints
