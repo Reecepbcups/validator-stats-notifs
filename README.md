@@ -1,6 +1,9 @@
 # validator-stats-notifs
 ### Built for Oni Validator
 
+![image](https://github.com/Reecepbcups/validator-stats-notifs/assets/31943163/93e6988d-3dc9-410a-b889-72743ea9a070)
+
+
 ### Steps to Run
 ```bash
 cp secrets.example.json secrets.json
